@@ -7,7 +7,7 @@ Mix.install([
 ])
 
 Application.put_env(:magus, :model_provider, System.fetch_env!("LB_MODEL_PROVIDER"))
-Application.put_env(:magus, :gemini_key, System.fetch_env!("LB_GEMINI_KEY"))
+Application.put_env(:magus, :openai_key, System.fetch_env!("LB_OPENAI_KEY"))
 ```
 
 ## Building a graph agent to write essays
@@ -127,4 +127,4 @@ agent = %{
 Magus.AgentExecutorLite.run(agent) |> Kino.Tree.new()
 ```
 
-<!-- livebook:{"offset":3247,"stamp":{"token":"XCP.0LcbHXhmbsY7HnOdbofzqeMwmoY-Q3pqL4pQT96MJsFaLwxW_RGR64vtrg7Vn33RrFwJSkRKdOnCWE-ZaJzvmU2q1ILfJcjz9hpbXfxFWB_6KJi2uDTWS2hGNahYlk7Ori1zD96BgDs","version":2}} -->
+<!-- livebook:{"offset":3247,"stamp":{"token":"XCP.E-fy1mMCNA14C-mnVanSQie-2w8la6TSzGM2xSNEzSSUwXvzceCICpqS2oUcdt8Syhbi9utkJkh0pRKeX78tDV--8_5RZNiYCz9yjtpiMaqFnSAspFVohTx6gHzvvEIH338DjyQukh4","version":2}} -->

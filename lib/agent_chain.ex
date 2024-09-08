@@ -5,7 +5,7 @@ defmodule Magus.AgentChain do
   This is an extention of the LangChain.Chains.LLMChain chain that provides
   a few helpers for the agent use case.
 
-  A `stream_callback_fn` can be passed in when the AgentChain is created and then
+  A `stream_handler` can be passed in when the AgentChain is created and then
   used automatically when the chain is run. This is useful for the AgentExecutor
   to listen to tokens as they're returned by the LLM.
 
@@ -16,13 +16,15 @@ defmodule Magus.AgentChain do
   alias LangChain.PromptTemplate
   alias Magus.AgentChain
 
+  alias LangChain.Message
+  alias LangChain.MessageDelta
   alias LangChain.Chains.LLMChain
   alias LangChain.ChatModels.ChatOpenAI
   alias LangChain.ChatModels.ChatGoogleAI
 
   defstruct [
     :wrapped_chain,
-    :stream_callback_fn,
+    :stream_handler,
     :json_response_schema
   ]
 
@@ -42,7 +44,6 @@ Here is the output schema:
 <%= @schema %>
 ```|
                         )
-
   @type t() :: %AgentChain{}
 
   @doc """
@@ -51,25 +52,30 @@ Here is the output schema:
   ## Options
 
   - `:verbose` - Runs the LLM in verbose mode if set to true. Defaults to `false`.
-  - `:stream_callback_fn` - Function that is called as the LLM returns messages.
+  - `:stream_handler` - Handler that is called as the LLM returns messages.
 
   """
   @spec new!(opts :: keyword()) :: t()
   def new!(opts \\ []) do
-    default = [verbose: false, stream_callback_fn: nil]
+    default = [verbose: false, stream_handler: nil]
     opts = Keyword.merge(default, opts)
 
-    stream_callback_fn = opts[:stream_callback_fn]
+    stream_handler = opts[:stream_handler]
 
+    callback =
+      if stream_handler != nil, do: stream_handler, else: get_default_stream_handler()
+
+    callback |> dbg
     # TODO: pull this default llm from a config
     wrapped_chain =
       %{
-        llm: get_default_llm(stream_callback_fn),
+        llm: get_default_llm(),
         verbose: opts[:verbose]
       }
       |> LLMChain.new!()
+      |> LLMChain.add_llm_callback(callback)
 
-    %AgentChain{wrapped_chain: wrapped_chain, stream_callback_fn: stream_callback_fn}
+    %AgentChain{wrapped_chain: wrapped_chain, stream_handler: stream_handler}
   end
 
   @doc """
@@ -128,16 +134,16 @@ Here is the output schema:
   @doc """
   Run the AgentChain.
 
-  If a `stream_callback_fn` was specified when the AgentChain was created,
+  If a `stream_handler` was specified when the AgentChain was created,
   it will be called as the LLM returns tokens.
 
   If a JSON response was requested with `ask_for_json_response`, the response
   will be validated against the schema and decoded to a struct.
   """
   @spec run(t()) :: {:error, binary() | list()} | {:ok, any(), LangChain.Message.t()}
-  def run(%AgentChain{stream_callback_fn: callback_fn, wrapped_chain: llm_chain} = chain) do
+  def run(%AgentChain{wrapped_chain: llm_chain} = chain) do
     with {:ok, _updated_llm, response} <-
-           LLMChain.run(llm_chain, callback_fn: callback_fn) |> dbg,
+           LLMChain.run(llm_chain),
          content <- process_raw_content(response.content),
          {:ok, content} <- parse_content_to_schema(content, chain.json_response_schema) do
       {:ok, content, response}
@@ -169,16 +175,16 @@ Here is the output schema:
     end
   end
 
-  defp get_default_llm(stream_callback_fn) do
+  defp get_default_llm() do
     model_provider = Application.fetch_env!(:magus, :model_provider)
 
     case model_provider do
-      "gemini_ai" -> get_default_gemini_llm(stream_callback_fn)
-      "openai" -> get_default_openai_llm(stream_callback_fn)
+      "gemini_ai" -> get_default_gemini_llm()
+      "openai" -> get_default_openai_llm()
     end
   end
 
-  def get_default_gemini_llm(stream_callback_fn) do
+  def get_default_gemini_llm() do
     gemini_key = Application.fetch_env!(:magus, :gemini_key)
     gemini_model = Application.get_env(:magus, :gemini_model) || @default_gemini_model
 
@@ -186,14 +192,25 @@ Here is the output schema:
       endpoint: "https://generativelanguage.googleapis.com",
       model: gemini_model,
       api_key: gemini_key,
-      stream: stream_callback_fn != nil
+      stream: true
     })
   end
 
-  defp get_default_openai_llm(stream_callback_fn) do
+  defp get_default_openai_llm() do
     openai_key = Application.fetch_env!(:magus, :openai_key)
     openai_model = Application.get_env(:magus, :openai_model) || @default_openai_model
 
-    ChatOpenAI.new!(%{model: openai_model, api_key: openai_key, stream: stream_callback_fn != nil})
+    ChatOpenAI.new!(%{model: openai_model, api_key: openai_key, stream: true})
+  end
+
+  defp get_default_stream_handler() do
+    %{
+      on_llm_new_delta: fn _model, %MessageDelta{} = _data ->
+        :ok
+      end,
+      on_message_processed: fn _chain, %Message{} = _data ->
+        :ok
+      end
+    }
   end
 end

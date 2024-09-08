@@ -14,7 +14,6 @@ defmodule Magus.AgentExecutor do
   use GenServer
   use Retry
 
-  alias LangChain.Message
   alias LangChain.MessageDelta
   alias Magus.AgentExecutor
   alias Magus.AgentExecutor.Step
@@ -158,23 +157,21 @@ defmodule Magus.AgentExecutor do
     notify_with_log(state.id, "\n--- BEGINNING STEP #{cur_node} ---\n")
 
     Task.start_link(fn ->
-      log_callback = fn
-        %MessageDelta{} = chunk ->
-          # we received a piece of data
-          AgentExecutor.notify_with_log(state.id, chunk.content)
+      log_handler = %{
+        on_llm_new_delta: fn _model, %MessageDelta{} = data ->
+          # We receive a piece of data
+          AgentExecutor.notify_with_log(state.id, data.content)
+        end
+      }
 
-        %Message{} = _ ->
-          # we received the finshed message once fully complete -- no need to log
-          :ok
-      end
-
-      chain = AgentChain.new!(stream_callback_fn: log_callback)
+      chain = AgentChain.new!(stream_handler: log_handler)
 
       # Retry up to 3 times if we get an error
       # TODO: Make this more configurable
       # and be more thoughtful about how we want to handle errors
       # thrown from nodes
-      retry with: exponential_backoff() |> cap(1_000) |> Stream.take(3), rescue_only: [MatchError] do
+      retry with: exponential_backoff() |> cap(1_000) |> Stream.take(3),
+            rescue_only: [MatchError] do
         cur_node_fn.(chain, cur_agent_state)
       after
         new_state -> GenServer.cast(pid, {:step_done, new_state})

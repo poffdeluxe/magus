@@ -47,8 +47,8 @@ defmodule Magus.GraphAgent do
     %{agent | entry_point_node: node}
   end
 
-  @spec get_final_output(t()) :: any()
-  def get_final_output(%GraphAgent{final_output_property: nil}) do
+  @spec get_final_output(t(), any()) :: any()
+  def get_final_output(%GraphAgent{final_output_property: nil}, _cur_state) do
     # No final output property specified
     ""
   end
