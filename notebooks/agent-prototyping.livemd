@@ -1,0 +1,104 @@
+# Agent Prototyping
+
+```elixir
+Mix.install([
+  {:magus, path: "#{__DIR__}/.."},
+  {:kino, "~> 0.12.0"}
+  # {:ex_dot, "~> 0.1.0"}
+])
+
+Application.put_env(:magus, :model_provider, System.fetch_env!("LB_MODEL_PROVIDER"))
+Application.put_env(:magus, :gemini_key, System.fetch_env!("LB_GEMINI_KEY"))
+```
+
+## New Agent
+
+```elixir
+alias LangChain.Message
+alias Magus.GraphAgent
+alias Magus.AgentChain
+
+write_story_node = fn chain, state ->
+  prompt = "Write a brief story about \"#{state.topic}\" that features three different characters"
+
+  {:ok, content, _response} =
+    chain
+    |> AgentChain.add_message(Message.new_user!(prompt))
+    |> AgentChain.run()
+
+  %{state | story: content}
+end
+
+story_schema = %{
+  "type" => "object",
+  "properties" => %{
+    "summary" => %{
+      "type" => "string",
+      "description" => "Brief summary of the story."
+    },
+    "characters" => %{
+      "type" => "array",
+      "description" => "List of characters in the story",
+      "items" => %{
+        "type" => "string"
+      }
+    }
+  }
+}
+
+structure_story_node = fn chain, state ->
+  prompt = """
+  You are a helpful assistant responsible for summarizing stories and identifying story characters.
+  The following is a short story about "#{state.topic}":
+
+  #{state.story}
+  """
+
+  {:ok, content, _response} =
+    chain
+    |> AgentChain.add_message(Message.new_user!(prompt))
+    |> AgentChain.ask_for_json_response(story_schema)
+    |> AgentChain.run()
+
+  %{state | structured_story: content}
+end
+
+agent =
+  %GraphAgent{
+    name: "Poff's Great New Agent",
+    initial_state: %{}
+  }
+  |> GraphAgent.add_node(:write_story, write_story_node)
+  |> GraphAgent.add_node(:structure_story, structure_story_node)
+  |> GraphAgent.set_entry_point(:write_story)
+  |> GraphAgent.add_edge(:write_story, :structure_story)
+  |> GraphAgent.add_edge(:structure_story, :end)
+```
+
+<!-- livebook:{"continue_on_error":true} -->
+
+```elixir
+# This only works if the ex_dot dependency is available (see the Notebook dependencies section)
+
+agent.graph
+|> Graph.Serializers.DOT.serialize()
+|> case do
+  {:ok, dot_graph} -> dot_graph
+end
+|> Dot.to_svg()
+|> Kino.Image.new(:svg)
+```
+
+```elixir
+import Kino.Shorts
+topic = read_text("New story topic: ")
+
+if topic == "" do
+  Kino.interrupt!(:error, "You must enter a topic")
+end
+
+initial_state = %{topic: topic, story: nil, structured_story: nil}
+Magus.AgentExecutorLite.run(%{agent | initial_state: initial_state}) |> Kino.Tree.new()
+```
+
+<!-- livebook:{"offset":2450,"stamp":{"token":"XCP.tO7GUW0CVTC1JhwsCcyeHNmxykDpoEK2w16gpUP2xnQ1NlhvTvuNdiK-VgaEVSgDmxXB_bQIC01Oy1uB9I80yOKN1G_bgavqUKoFi0pRWGog79oKMrKtQuvPlPPG8CfDhJfLimQHW2w","version":2}} -->

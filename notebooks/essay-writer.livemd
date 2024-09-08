@@ -1,0 +1,130 @@
+# Essay Writer
+
+```elixir
+Mix.install([
+  {:magus, path: "#{__DIR__}/.."},
+  {:kino, "~> 0.12.0"}
+])
+
+Application.put_env(:magus, :model_provider, System.fetch_env!("LB_MODEL_PROVIDER"))
+Application.put_env(:magus, :gemini_key, System.fetch_env!("LB_GEMINI_KEY"))
+```
+
+## Building a graph agent to write essays
+
+```elixir
+defmodule EssayWriterState do
+  defstruct [
+    :topic,
+    :latest_revision,
+    :latest_feedback,
+    num_of_revisions: 0
+  ]
+end
+```
+
+```elixir
+alias Magus.GraphAgent
+alias Magus.AgentChain
+alias LangChain.PromptTemplate
+
+first_draft_template = ~S|
+You are a writer who is working on a three-paragraph essay on the following topic: <%= @topic %>.
+| |> PromptTemplate.from_template!()
+
+writer_with_revision_template = ~S|
+You are a writer who is working on a three-paragraph essay on the following topic: <%= @topic %>.
+This is a previous revision of the essay:
+
+  <%= @latest_revision %>
+
+  On the latest revision, you received the following feedback:
+
+  <%= @latest_feedback %>
+
+  Write a new revision of the essay, incorporating the feedback where applicable. Begin immediately below:
+| |> PromptTemplate.from_template!()
+
+feedback_template = ~S|
+You are a professor grading and providing feedback on an essay on the following topic: <%= @topic %>.
+
+This is the essay:
+
+<%= @latest_revision %>
+
+Provide feedback on this essay below:
+| |> PromptTemplate.from_template!()
+
+write_first_draft_node = fn chain, state ->
+  {:ok, content, _response} =
+    chain
+    |> AgentChain.add_message(PromptTemplate.to_message!(first_draft_template, state))
+    |> AgentChain.run()
+
+  %EssayWriterState{state | latest_revision: content, num_of_revisions: 1}
+end
+
+write_node = fn chain, state ->
+  {:ok, content, _response} =
+    chain
+    |> AgentChain.add_message(PromptTemplate.to_message!(writer_with_revision_template, state))
+    |> AgentChain.run()
+
+  %EssayWriterState{
+    state
+    | latest_revision: content,
+      num_of_revisions: state.num_of_revisions + 1
+  }
+end
+
+feedback_node = fn chain, state ->
+  {:ok, content, _response} =
+    chain
+    |> AgentChain.add_message(PromptTemplate.to_message!(feedback_template, state))
+    |> AgentChain.run()
+
+  %EssayWriterState{state | latest_feedback: content}
+end
+
+should_continue = fn %EssayWriterState{num_of_revisions: num_of_revisions} = _state ->
+  case num_of_revisions > 2 do
+    true -> :end
+    false -> :provide_feedback
+  end
+end
+
+agent =
+  %GraphAgent{
+    name: "Essay Writer",
+    final_output_property: :latest_revision,
+    initial_state: %EssayWriterState{}
+  }
+  |> GraphAgent.add_node(:first_draft, write_first_draft_node)
+  |> GraphAgent.add_node(:write, write_node)
+  |> GraphAgent.add_node(:provide_feedback, feedback_node)
+  |> GraphAgent.set_entry_point(:first_draft)
+  |> GraphAgent.add_edge(:first_draft, :provide_feedback)
+  |> GraphAgent.add_edge(:provide_feedback, :write)
+  |> GraphAgent.add_conditional_edges(:write, [:end, :provide_feedback], should_continue)
+```
+
+```elixir
+import Kino.Shorts
+
+topic = read_text("New topic: ")
+
+if topic == "" do
+  Kino.interrupt!(:error, "You must enter a topic")
+end
+
+agent = %{
+  agent
+  | initial_state: %EssayWriterState{
+      topic: topic
+    }
+}
+
+Magus.AgentExecutorLite.run(agent) |> Kino.Tree.new()
+```
+
+<!-- livebook:{"offset":3247,"stamp":{"token":"XCP.0LcbHXhmbsY7HnOdbofzqeMwmoY-Q3pqL4pQT96MJsFaLwxW_RGR64vtrg7Vn33RrFwJSkRKdOnCWE-ZaJzvmU2q1ILfJcjz9hpbXfxFWB_6KJi2uDTWS2hGNahYlk7Ori1zD96BgDs","version":2}} -->
