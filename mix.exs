@@ -4,16 +4,28 @@ defmodule Magus.MixProject do
   def project do
     [
       app: :magus,
+      name: "Magus",
+      description: "A very simple library for implementing graph-based LLM agents in Elixir",
       version: "0.1.0",
       elixir: "~> 1.16",
       start_permanent: Mix.env() == :prod,
-      deps: deps()
+      deps: deps(),
+      package: package()
     ]
   end
 
   def application do
     [
       extra_applications: [:logger]
+    ]
+  end
+
+  def package do
+    [
+      licenses: ["Apache-2.0"],
+      links: %{
+        "GitHub" => "https://github.com/poffdeluxe/magus"
+      }
     ]
   end
 

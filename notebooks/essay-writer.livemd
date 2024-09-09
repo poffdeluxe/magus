@@ -6,7 +6,7 @@ Mix.install([
   {:kino, "~> 0.12.0"}
 ])
 
-Application.put_env(:magus, :model_provider, System.fetch_env!("LB_MODEL_PROVIDER"))
+Application.put_env(:magus, :model_provider, "openai")
 Application.put_env(:magus, :openai_key, System.fetch_env!("LB_OPENAI_KEY"))
 ```
 

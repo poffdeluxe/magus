@@ -7,4 +7,4 @@ GenServer for storing state as the agent runs asynchronously) and `Magus.AgentEx
 steps through th agent graph synchronously in the same process)
 
 ## Examples
-Livebooks with a few examples can be found in the `notebooks/` directory
+Livebooks with a few examples can be found in the `notebooks/` directory. You will need to set a `OPENAI_KEY` secret in your Livebook.
