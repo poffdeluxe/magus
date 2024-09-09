@@ -65,7 +65,6 @@ Here is the output schema:
     callback =
       if stream_handler != nil, do: stream_handler, else: get_default_stream_handler()
 
-    callback |> dbg
     # TODO: pull this default llm from a config
     wrapped_chain =
       %{

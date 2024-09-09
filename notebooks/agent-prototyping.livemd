@@ -7,8 +7,8 @@ Mix.install([
   # {:ex_dot, "~> 0.1.0"}
 ])
 
-Application.put_env(:magus, :model_provider, System.fetch_env!("LB_MODEL_PROVIDER"))
-Application.put_env(:magus, :gemini_key, System.fetch_env!("LB_GEMINI_KEY"))
+Application.put_env(:magus, :model_provider, "openai")
+Application.put_env(:magus, :openai_key, System.fetch_env!("LB_OPENAI_KEY"))
 ```
 
 ## New Agent
