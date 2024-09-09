@@ -31,6 +31,7 @@ defmodule Magus.MixProject do
 
   defp deps do
     [
+      {:ex_doc, "~> 0.31", only: :dev, runtime: false},
       {:ex_json_schema, "~> 0.10.2"},
       {:langchain, "~> 0.3.0-rc.0"},
       {:libgraph, "~> 0.16.0"},
