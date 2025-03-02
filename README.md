@@ -2,7 +2,7 @@
 
 [![Module Version](https://img.shields.io/hexpm/v/magus.svg)](https://hex.pm/packages/magus)
 [![Hex Docs](https://img.shields.io/badge/hex-docs-lightgreen.svg)](https://hexdocs.pm/magus/)
-[![License](https://img.shields.io/hexpm/l/magus.svg)](https://github.com/poffdeluxe/magus/blob/main/LICENSE)
+[![License](https://img.shields.io/hexpm/l/magus.svg)](https://github.com/poffdeluxe/magus/blob/main/LICENSE.md)
 
 Magus is a proof-of-concept libray for implementing and running graph-based agents in Elixir.
 
