@@ -6,7 +6,7 @@ defmodule Magus.MixProject do
       app: :magus,
       name: "Magus",
       description: "A very simple library for implementing graph-based LLM agents in Elixir",
-      version: "0.1.0",
+      version: "0.2.0",
       elixir: "~> 1.18",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
