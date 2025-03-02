@@ -21,7 +21,7 @@ alias Magus.AgentChain
 write_story_node = fn chain, state ->
   prompt = "Write a brief story about \"#{state.topic}\" that features three different characters"
 
-  {:ok, content, _response} =
+  {:ok, content, _last_message} =
     chain
     |> AgentChain.add_message(Message.new_user!(prompt))
     |> AgentChain.run()
@@ -54,7 +54,7 @@ structure_story_node = fn chain, state ->
   #{state.story}
   """
 
-  {:ok, content, _response} =
+  {:ok, content, _last_message} =
     chain
     |> AgentChain.add_message(Message.new_user!(prompt))
     |> AgentChain.ask_for_json_response(story_schema)
@@ -101,4 +101,4 @@ initial_state = %{topic: topic, story: nil, structured_story: nil}
 Magus.AgentExecutorLite.run(%{agent | initial_state: initial_state}) |> Kino.Tree.new()
 ```
 
-<!-- livebook:{"offset":2450,"stamp":{"token":"XCP.tO7GUW0CVTC1JhwsCcyeHNmxykDpoEK2w16gpUP2xnQ1NlhvTvuNdiK-VgaEVSgDmxXB_bQIC01Oy1uB9I80yOKN1G_bgavqUKoFi0pRWGog79oKMrKtQuvPlPPG8CfDhJfLimQHW2w","version":2}} -->
+<!-- livebook:{"offset":2428,"stamp":{"token":"XCP.fe-kagN9KEkM7GCeBUphdc8GpDTzYeaHdvtRa0rBLItWPVHrSNZuVhCEUPzxZc6p9pn60VHUHvt1TSP2nuOe61CRl1ZFLWSfH5_NDRbeo8WZZK5vxA","version":2}} -->

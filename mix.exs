@@ -7,7 +7,7 @@ defmodule Magus.MixProject do
       name: "Magus",
       description: "A very simple library for implementing graph-based LLM agents in Elixir",
       version: "0.1.0",
-      elixir: "~> 1.16",
+      elixir: "~> 1.18",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       package: package()
@@ -33,8 +33,9 @@ defmodule Magus.MixProject do
     [
       {:ex_doc, "~> 0.31", only: :dev, runtime: false},
       {:ex_json_schema, "~> 0.10.2"},
-      {:langchain, "~> 0.3.0-rc.0"},
+      {:langchain, "~> 0.3.1"},
       {:libgraph, "~> 0.16.0"},
+      {:mimic, "~> 1.10", only: :test},
       {:phoenix_pubsub, "~> 2.0"},
       {:retry, "~> 0.18"}
     ]

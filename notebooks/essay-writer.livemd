@@ -127,4 +127,4 @@ agent = %{
 Magus.AgentExecutorLite.run(agent) |> Kino.Tree.new()
 ```
 
-<!-- livebook:{"offset":3247,"stamp":{"token":"XCP.E-fy1mMCNA14C-mnVanSQie-2w8la6TSzGM2xSNEzSSUwXvzceCICpqS2oUcdt8Syhbi9utkJkh0pRKeX78tDV--8_5RZNiYCz9yjtpiMaqFnSAspFVohTx6gHzvvEIH338DjyQukh4","version":2}} -->
+<!-- livebook:{"offset":3217,"stamp":{"token":"XCP.pKCposNqacGj2hRlEYLCV_OD4NKTuI7h6_32Bc3YDrjfTmNdRNS_mRHzi56h3OVFGEpr1kIS2duBm9GY9fewTZHlxd2A8LHpszpiZZ-IQlwYJ_oLWw","version":2}} -->

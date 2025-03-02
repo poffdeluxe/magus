@@ -4,9 +4,8 @@ defmodule Magus.AgentChainTest do
   alias LangChain.Message
   alias Magus.AgentChain
 
-  import LangChain.Utils.ApiOverride
-
   use ExUnit.Case
+  use Mimic
 
   test "if json is requested, it should parse and validate proper llm responses", %{} do
     json_schema = %{
@@ -34,7 +33,10 @@ defmodule Magus.AgentChainTest do
     fake_messages = [
       Message.new!(%{role: :assistant, content: raw_json, status: :complete})
     ]
-    set_api_override({:ok, fake_messages})
+
+    expect(ChatOpenAI, :call, fn _model, _messages, _tools ->
+      {:ok, fake_messages}
+    end)
 
     wrapped_chain =
       %{
@@ -42,9 +44,11 @@ defmodule Magus.AgentChainTest do
       }
       |> LLMChain.new!()
 
-    chain = %AgentChain{
-      wrapped_chain: wrapped_chain
-    } |> AgentChain.ask_for_json_response(json_schema)
+    chain =
+      %AgentChain{
+        wrapped_chain: wrapped_chain
+      }
+      |> AgentChain.ask_for_json_response(json_schema)
 
     {:ok, content, _response} = chain |> AgentChain.run()
 
@@ -52,7 +56,8 @@ defmodule Magus.AgentChainTest do
     assert content["characters"] == ["Lewis", "Max"]
   end
 
-  test "if json is requested, it should error on json llm repsonses that don't conform to spec", %{} do
+  test "if json is requested, it should error on json llm repsonses that don't conform to spec",
+       %{} do
     json_schema = %{
       "type" => "object",
       "properties" => %{
@@ -79,7 +84,10 @@ defmodule Magus.AgentChainTest do
     fake_messages = [
       Message.new!(%{role: :assistant, content: raw_json, status: :complete})
     ]
-    set_api_override({:ok, fake_messages})
+
+    expect(ChatOpenAI, :call, fn _model, _messages, _tools ->
+      {:ok, fake_messages}
+    end)
 
     wrapped_chain =
       %{
@@ -87,9 +95,11 @@ defmodule Magus.AgentChainTest do
       }
       |> LLMChain.new!()
 
-    chain = %AgentChain{
-      wrapped_chain: wrapped_chain
-    } |> AgentChain.ask_for_json_response(json_schema)
+    chain =
+      %AgentChain{
+        wrapped_chain: wrapped_chain
+      }
+      |> AgentChain.ask_for_json_response(json_schema)
 
     {:error, validation_errors} = chain |> AgentChain.run()
     assert validation_errors == [{"Required property characters was not present.", "#"}]
@@ -121,7 +131,10 @@ defmodule Magus.AgentChainTest do
     fake_messages = [
       Message.new!(%{role: :assistant, content: raw_content, status: :complete})
     ]
-    set_api_override({:ok, fake_messages})
+
+    expect(ChatOpenAI, :call, fn _model, _messages, _tools ->
+      {:ok, fake_messages}
+    end)
 
     wrapped_chain =
       %{
@@ -129,9 +142,11 @@ defmodule Magus.AgentChainTest do
       }
       |> LLMChain.new!()
 
-    chain = %AgentChain{
-      wrapped_chain: wrapped_chain
-    } |> AgentChain.ask_for_json_response(json_schema)
+    chain =
+      %AgentChain{
+        wrapped_chain: wrapped_chain
+      }
+      |> AgentChain.ask_for_json_response(json_schema)
 
     {:error, error} = chain |> AgentChain.run()
     assert error == %Jason.DecodeError{position: 0, token: nil, data: "Lewis, Max"}

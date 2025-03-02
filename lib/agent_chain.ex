@@ -72,7 +72,7 @@ Here is the output schema:
         verbose: opts[:verbose]
       }
       |> LLMChain.new!()
-      |> LLMChain.add_llm_callback(callback)
+      |> LLMChain.add_callback(callback)
 
     %AgentChain{wrapped_chain: wrapped_chain, stream_handler: stream_handler}
   end
@@ -139,13 +139,13 @@ Here is the output schema:
   If a JSON response was requested with `ask_for_json_response`, the response
   will be validated against the schema and decoded to a struct.
   """
-  @spec run(t()) :: {:error, binary() | list()} | {:ok, any(), LangChain.Message.t()}
+  @spec run(t()) :: {:error, binary() | list()} | {:ok, :any, LangChain.Message.t()}
   def run(%AgentChain{wrapped_chain: llm_chain} = chain) do
-    with {:ok, _updated_llm, response} <-
+    with {:ok, updated_llm_chain} <-
            LLMChain.run(llm_chain),
-         content <- process_raw_content(response.content),
+         content <- process_raw_content(updated_llm_chain.last_message.content),
          {:ok, content} <- parse_content_to_schema(content, chain.json_response_schema) do
-      {:ok, content, response}
+      {:ok, content, updated_llm_chain.last_message}
     end
   end
 
