@@ -19,7 +19,7 @@ defmodule Magus.AgentExecutorLite do
   defp do_step(%GraphAgent{} = agent, cur_state, cur_node) do
     cur_node_fn = agent.node_to_fn[cur_node]
 
-    chain = Magus.AgentChain.new!()
+    chain = Magus.AgentChain.new!(llm: agent.llm)
     next_state = cur_node_fn.(chain, cur_state)
 
     # Find next edge to go to
