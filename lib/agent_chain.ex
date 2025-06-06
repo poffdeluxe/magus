@@ -53,6 +53,7 @@ Here is the output schema:
 
   - `:verbose` - Runs the LLM in verbose mode if set to true. Defaults to `false`.
   - `:stream_handler` - Handler that is called as the LLM returns messages.
+  - `:llm` - A LangChain chat model.
 
   """
   @spec new!(opts :: keyword()) :: t()
@@ -65,10 +66,9 @@ Here is the output schema:
     callback =
       if stream_handler != nil, do: stream_handler, else: get_default_stream_handler()
 
-    # TODO: pull this default llm from a config
     wrapped_chain =
       %{
-        llm: get_default_llm(),
+        llm: opts[:llm] || get_default_llm(),
         verbose: opts[:verbose]
       }
       |> LLMChain.new!()

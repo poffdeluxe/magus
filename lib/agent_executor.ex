@@ -164,7 +164,7 @@ defmodule Magus.AgentExecutor do
         end
       }
 
-      chain = AgentChain.new!(stream_handler: log_handler)
+      chain = AgentChain.new!(llm: agent.llm, stream_handler: log_handler)
 
       # Retry up to 3 times if we get an error
       # TODO: Make this more configurable

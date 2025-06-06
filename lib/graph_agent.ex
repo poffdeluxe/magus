@@ -9,7 +9,8 @@ defmodule Magus.GraphAgent do
     final_output_property: nil,
     node_to_fn: %{},
     node_to_conditional_fn: %{},
-    cleanup_fn: nil
+    cleanup_fn: nil,
+    llm: nil
   ]
 
   @type t() :: %GraphAgent{}
